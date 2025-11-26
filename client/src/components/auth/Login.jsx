@@ -1,5 +1,4 @@
-import React, { useState, useContext } from "react";
-import { FcGoogle } from "react-icons/fc";
+import React, { useState, useContext, useEffect } from "react";
 import { AuthContext } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 
@@ -7,35 +6,15 @@ const Login = () => {
   const { handleLogin, handleGoogleLogin } = useContext(AuthContext);
   const navigate = useNavigate();
 
-  const [email, setEmail]       = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading]   = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const submitForm = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-
+  // GOOGLE LOGIN CALLBACK
+  const handleGoogleResponse = async (response) => {
     try {
-      const res = await handleLogin(email, password);
+      const res = await handleGoogleLogin(response.credential);
 
-      if (res.success) {
-        alert("Login Successful!");
-        navigate("/app/dashboard"); // Redirect to dashboard
-      } else {
-        alert(res.message || "Login Failed");
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Something went wrong!");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleGoogleSignIn = async () => {
-    try {
-      // TODO: implement Google Login flow
-      const res = await handleGoogleLogin("GOOGLE_CREDENTIAL"); // Replace with actual credential
       if (res.success) {
         alert("Google Login Successful!");
         navigate("/app/dashboard");
@@ -48,6 +27,44 @@ const Login = () => {
     }
   };
 
+  // LOAD GOOGLE BUTTON
+  useEffect(() => {
+    /* global google */
+    if (window.google) {
+      google.accounts.id.initialize({
+        client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+        callback: handleGoogleResponse,
+      });
+
+      google.accounts.id.renderButton(
+        document.getElementById("googleBtn"),
+        { theme: "outline", size: "large", width: "100%" }
+      );
+    }
+  }, []);
+
+  // EMAIL LOGIN SUBMIT
+  const submitForm = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const res = await handleLogin(email, password);
+
+      if (res.success) {
+        alert("Login Successful!");
+        navigate("/app/dashboard");
+      } else {
+        alert(res.message || "Login Failed");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Something went wrong!");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="w-full min-h-screen flex items-center justify-center bg-gray-100 px-4 py-10">
       <div className="bg-white shadow-xl rounded-2xl w-full max-w-md p-8">
@@ -56,23 +73,17 @@ const Login = () => {
           Welcome Back
         </h2>
 
-        {/* Google Login */}
-        <button
-          onClick={handleGoogleSignIn}
-          className="w-full flex items-center justify-center gap-3 bg-white border border-gray-300 shadow-sm py-3 rounded-xl hover:bg-gray-50 transition"
-        >
-          <FcGoogle size={24} />
-          <span className="text-gray-700 font-medium">Sign in with Google</span>
-        </button>
+        {/* {/* GOOGLE LOGIN BUTTON }
+        <div id="googleBtn" className="w-full mb-6"></div>
 
-        {/* OR separator */}
+        {/* OR SEPARATOR }
         <div className="flex items-center my-6">
           <hr className="w-full border-gray-300" />
           <span className="px-3 text-gray-500 text-sm">OR</span>
           <hr className="w-full border-gray-300" />
-        </div>
+        </div> */}
 
-        {/* Email/Password Login */}
+        {/* EMAIL LOGIN FORM */}
         <form className="space-y-4" onSubmit={submitForm}>
           <div>
             <label className="block text-sm font-medium text-gray-600">Email</label>

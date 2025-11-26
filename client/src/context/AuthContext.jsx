@@ -6,63 +6,92 @@ import { loginUser, registerUser, googleLogin } from "../api/authApi";
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [userToken, setUserToken] = useState(localStorage.getItem("token") || null);
+  const [userToken, setUserToken] = useState(
+    localStorage.getItem("token") || null
+  );
+
+  // Profile now includes stats
   const [profileData, setProfileData] = useState(null);
+
   const API = "http://localhost:5000/api";
 
-  // --------------------------
+  // ------------------------------------
   // REGISTER
-  // --------------------------
+  // ------------------------------------
   const handleRegister = async (fullName, email, password) => {
     const res = await registerUser({ fullName, email, password });
     return res.data;
   };
 
-  // --------------------------
+  // ------------------------------------
   // LOGIN
-  // --------------------------
+  // ------------------------------------
   const handleLogin = async (email, password) => {
     const res = await loginUser({ email, password });
+
     if (res.data.success) {
       localStorage.setItem("token", res.data.token);
       setUserToken(res.data.token);
+
       await fetchProfile(res.data.token);
     }
+
     return res.data;
   };
 
-  // --------------------------
+  // ------------------------------------
   // GOOGLE LOGIN
-  // --------------------------
+  // ------------------------------------
   const handleGoogleLogin = async (credential) => {
-    const res = await googleLogin(credential);
+    const res = await googleLogin({ credential });
+
     if (res.data.success) {
       localStorage.setItem("token", res.data.token);
       setUserToken(res.data.token);
+
       await fetchProfile(res.data.token);
     }
+
     return res.data;
   };
 
-  // --------------------------
+  // ------------------------------------
   // LOGOUT
-  // --------------------------
+  // ------------------------------------
   const handleLogout = () => {
     localStorage.removeItem("token");
     setUserToken(null);
     setProfileData(null);
   };
 
-  // --------------------------
-  // FETCH PROFILE
-  // --------------------------
+  // ------------------------------------
+  // FETCH PROFILE (UPDATED with stats)
+  // ------------------------------------
   const fetchProfile = useCallback(async (token) => {
     if (!token) return;
+
     try {
       const res = await axios.get(`${API}/profile`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setProfileData(res.data);
+
+      // FULL profile including stats block
+      setProfileData({
+        fullName: res.data.fullName,
+        email: res.data.email,
+        profileImage: res.data.profileImage,
+        userId: res.data.userId,
+
+        createdPolls: res.data.createdPolls || [],
+        likedPolls: res.data.likedPolls || [],
+
+        stats: {
+          totalCreatedPolls: res.data.totalCreatedPolls || 0,
+          totalLikedPolls: res.data.totalLikedPolls || 0,
+          totalVotesOnMyPolls: res.data.totalVotesOnMyPolls || 0,
+          totalVotesGivenByUser: res.data.totalVotesGivenByUser || 0,
+        },
+      });
     } catch (err) {
       console.error("Profile fetch error:", err);
     }
@@ -73,10 +102,9 @@ export const AuthProvider = ({ children }) => {
   }, [userToken, fetchProfile]);
 
   // =====================================================
-  //               🟢 POLL FUNCTIONS
+  //               POLL FUNCTIONS
   // =====================================================
 
-  // CREATE POLL
   const createPoll = async (formData) => {
     try {
       const res = await axios.post(`${API}/polls/create`, formData, {
@@ -88,11 +116,13 @@ export const AuthProvider = ({ children }) => {
       return res.data;
     } catch (err) {
       console.error("Create poll error:", err);
-      return { success: false, message: err.response?.data?.message || "Server Error" };
+      return {
+        success: false,
+        message: err.response?.data?.message || "Server Error",
+      };
     }
   };
 
-  // GET ALL POLLS
   const getAllPolls = async () => {
     try {
       const res = await axios.get(`${API}/polls`);
@@ -103,7 +133,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // GET MY POLLS
   const getMyPolls = async () => {
     try {
       const res = await axios.get(`${API}/polls/my`, {
@@ -116,7 +145,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // SHIP POLL
   const shipPoll = async (pollId, toUserId) => {
     try {
       const res = await axios.post(
@@ -136,13 +164,13 @@ export const AuthProvider = ({ children }) => {
       value={{
         userToken,
         profileData,
+
         handleRegister,
         handleLogin,
         handleGoogleLogin,
         handleLogout,
         fetchProfile,
 
-        // Poll functions
         createPoll,
         getAllPolls,
         getMyPolls,

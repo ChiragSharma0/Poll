@@ -39,7 +39,14 @@ const createPoll = async (req, res) => {
       pollData.image = req.file.filename;
     }
 
+    // Create the poll
     const poll = await Poll.create(pollData);
+
+    // ✅ Add poll ID to user's createdPolls
+    const User = require("../models/User"); // ensure User model is imported
+    await User.findByIdAndUpdate(req.user.id, {
+      $push: { createdPolls: poll._id },
+    });
 
     res.json({
       success: true,
@@ -51,6 +58,7 @@ const createPoll = async (req, res) => {
     res.status(500).json({ success: false, message: "Server Error" });
   }
 };
+
 
 // GET ALL POLLS
 const getAllPolls = async (req, res) => {
@@ -96,10 +104,90 @@ const shipPoll = async (req, res) => {
   }
 };
 
+const voteOption = async (req, res) => {
+  try {
+    const { pollId, index } = req.params;
+    const optionIndex = Number(index);
+    const userId = req.user?.id;
+
+    const poll = await Poll.findById(pollId);
+    if (!poll) {
+      return res.status(404).json({ success: false, message: "Poll not found" });
+    }
+
+    if (!poll.votedBy) poll.votedBy = [];
+
+    // FIXED: Correct duplicate vote check
+    if (poll.votedBy.some(v => v.userId.toString() === userId)) {
+      return res.status(400).json({ success: false, message: "User already voted" });
+    }
+
+    if (!poll.options[optionIndex]) {
+      return res.status(400).json({ success: false, message: "Invalid option index" });
+    }
+
+    poll.options[optionIndex].votes += 1;
+
+    // store what user voted
+    poll.votedBy.push({ userId, optionIndex });
+
+    await poll.save();
+
+    const updatedPoll = await Poll.findById(pollId)
+      .populate("createdBy", "fullName profileImage");
+
+    res.status(200).json({ success: true, poll: updatedPoll });
+
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// ---- LIKE / UNLIKE POLL ----
+
+// ---- LIKE / UNLIKE ----
+// ---- LIKE / UNLIKE ----
+const likePoll = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const pollId = req.params.pollId;
+    const poll = await Poll.findById(pollId);
+
+    if (!poll) return res.status(404).json({ success: false, message: "Poll not found" });
+
+    const index = poll.likedBy.findIndex(u => u.toString() === userId);
+    const User = require("../models/User");
+
+    if (index === -1) {
+      // User likes the poll
+      poll.likedBy.push(userId);
+      await User.findByIdAndUpdate(userId, { $addToSet: { likedPolls: pollId } });
+    } else {
+      // User unlikes the poll
+      poll.likedBy.splice(index, 1);
+      await User.findByIdAndUpdate(userId, { $pull: { likedPolls: pollId } });
+    }
+
+    await poll.save();
+
+    const updatedPoll = await Poll.findById(pollId)
+      .populate("createdBy", "fullName profileImage")
+      .populate("votedBy.userId", "fullName profileImage")
+      .populate("likedBy", "fullName profileImage");
+
+    res.json({ success: true, poll: updatedPoll });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+
 module.exports = {
   createPoll,
   getAllPolls,
   getMyPolls,
   shipPoll,
-  upload, // export multer middleware
+  voteOption,
+  likePoll,
+  upload,
 };

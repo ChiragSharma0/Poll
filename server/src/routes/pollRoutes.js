@@ -6,6 +6,8 @@ const {
   getAllPolls,
   getMyPolls,
   shipPoll,
+  voteOption,
+  likePoll,
   upload,
 } = require("../controllers/pollController");
 
@@ -20,5 +22,7 @@ router.get("/my", authMiddleware, getMyPolls);
 
 // SHIP POLL
 router.post("/ship/:pollId", authMiddleware, shipPoll);
+router.post("/Vote/:pollId/option/:index",authMiddleware,voteOption);
+router.post("/like/:pollId", authMiddleware, likePoll);
 
 module.exports = router;

@@ -27,7 +27,13 @@ export default function DashboardPage() {
       const res = await axios.get(`${API}/admin/stats`, {
         headers: { Authorization: `Bearer ${userToken}` },
       });
-      setStats(res.data);
+      console.log("fetching dashboard")
+      setStats({
+        totalUsers: res.data.totalUsers,
+        totalPolls: res.data.totalPolls,
+        totalVotes: res.data.totalVotes,
+      });
+      console.log(stats);
     } catch (err) {
       console.error("Stats Error:", err);
     }
@@ -35,21 +41,28 @@ export default function DashboardPage() {
 
   // Fetch Latest Polls
   const fetchLatestPolls = async () => {
-    try {
-      const res = await axios.get(`${API}/admin/latest-polls`, {
-        headers: { Authorization: `Bearer ${userToken}` },
-      });
+  try {
+    const { data } = await axios.get(`${API}/admin/latest-polls`, {
+      headers: { Authorization: `Bearer ${userToken}` },
+    });
 
-      // 🔥 Ensure sorting BY NEWEST CREATED POLL FIRST
-      const sorted = res.data.sort(
-        (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
-      );
-
-      setLatest(sorted);
-    } catch (err) {
-      console.error("Latest Polls Error:", err);
+    if (!Array.isArray(data)) {
+      console.warn("Expected an array of polls, got:", data);
+      setLatest([]);
+      return;
     }
-  };
+
+    // Sort by createdAt descending (newest first)
+    const sortedPolls = data
+      .slice() // create a shallow copy to avoid mutating original
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    setLatest(sortedPolls);
+  } catch (err) {
+    console.error("Failed to fetch latest polls:", err);
+    setLatest([]);
+  }
+};
 
   // Initial Load
   useEffect(() => {

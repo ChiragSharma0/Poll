@@ -6,7 +6,7 @@ const cors = require("cors");
 const authRoutes = require("./routes/authRoutes");
 const profileRoutes = require("./routes/profileRoutes");
 const pollRoutes = require("./routes/pollRoutes");
-
+const AdminRoutes = require("./routes/DashRoutes")
 // Middleware
 app.use(cors());
 app.use(express.json());
@@ -24,6 +24,7 @@ app.get("/", (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/profile", profileRoutes);
 app.use("/api/polls", pollRoutes);
+app.use("/api/admin", AdminRoutes);
 
 // Global Error Handler (optional)
 app.use((err, req, res, next) => {

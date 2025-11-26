@@ -31,7 +31,7 @@ const Register = () => {
           Create your Account
         </h2>
 
-        <button className="w-full flex items-center justify-center gap-3 bg-white border border-gray-300 shadow-md py-3 rounded-xl hover:bg-gray-50 transition">
+       {/*  <button className="w-full flex items-center justify-center gap-3 bg-white border border-gray-300 shadow-md py-3 rounded-xl hover:bg-gray-50 transition">
           <FcGoogle size={24} />
           <span className="text-gray-700 font-medium">Sign up with Google</span>
         </button>
@@ -40,7 +40,7 @@ const Register = () => {
           <hr className="w-full border-gray-300" />
           <span className="px-3 text-gray-500 text-sm">OR</span>
           <hr className="w-full border-gray-300" />
-        </div>
+        </div> */}
 
         <form className="space-y-4" onSubmit={submitForm}>
 
