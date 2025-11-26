@@ -11,6 +11,7 @@ export default function PollCard({ poll, onDelete }) {
 
   const { profileData } = useContext(AuthContext);
   const loggedUserId = profileData?.userId;
+  const API = import.meta.env.VITE_API_URL;
 
   // Sync poll updates
   useEffect(() => {
@@ -49,7 +50,7 @@ export default function PollCard({ poll, onDelete }) {
   const handleVote = async index => {
     try {
       const { data } = await axios.post(
-        `http://localhost:5000/api/polls/vote/${pollData._id}/option/${index}`,
+        `${API}/polls/vote/${pollData._id}/option/${index}`,
         {},
         { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
       );
@@ -63,7 +64,7 @@ export default function PollCard({ poll, onDelete }) {
   const handleLike = async () => {
     try {
       const { data } = await axios.post(
-        `http://localhost:5000/api/polls/like/${pollData._id}`,
+        `${API}/polls/like/${pollData._id}`,
         {},
         { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
       );
@@ -75,16 +76,18 @@ export default function PollCard({ poll, onDelete }) {
 
   // ---- DELETE HANDLER ----
   const handleDelete = async () => {
-    try {
-      await axios.delete(`http://localhost:5000/api/polls/${pollData._id}`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-      });
-      onDelete(pollData._id);
-      setMenuOpen(false);
-    } catch (err) {
-      console.log("Delete error:", err);
-    }
-  };
+  try {
+    await axios.post(`${API}/polls/delete/${pollData._id}`, {}, {
+  headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+});
+
+    onDelete(pollData._id);
+    setMenuOpen(false);
+  } catch (err) {
+    console.log("Delete error:", err);
+  }
+};
+
 
   return (
     <div className="relative bg-white rounded-2xl shadow-lg p-4">

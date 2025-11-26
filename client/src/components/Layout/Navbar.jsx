@@ -32,7 +32,7 @@ export default function Navbar() {
           className="text-2xl font-extrabold cursor-pointer ml-2 md:ml-6 hover:scale-105 transition-transform"
           onClick={() => navigate("/app/dashboard")}
         >
-          Pollify
+          VOXINA 
         </div>
 
         {/* Desktop Links */}

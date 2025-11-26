@@ -1,6 +1,8 @@
 const Poll = require("../models/Poll");
 const multer = require("multer");
 const path = require("path");
+const fs = require("fs");
+const User = require("../models/User");
 
 // Multer setup
 const storage = multer.diskStorage({
@@ -145,8 +147,6 @@ const voteOption = async (req, res) => {
 
 // ---- LIKE / UNLIKE POLL ----
 
-// ---- LIKE / UNLIKE ----
-// ---- LIKE / UNLIKE ----
 const likePoll = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -182,6 +182,41 @@ const likePoll = async (req, res) => {
 };
 
 
+
+
+const deletePoll = async (req, res) => {
+  try {
+    const pollId = req.params.pollId;
+    const userId = req.user.id;
+
+    const poll = await Poll.findById(pollId);
+    if (!poll)
+      return res.status(404).json({ success: false, message: "Poll not found" });
+
+    if (poll.createdBy.toString() !== userId)
+      return res.status(403).json({ success: false, message: "Not allowed" });
+
+    // Remove poll image if exists
+    if (poll.image) {
+      const imgPath = path.join(__dirname, "../uploads", poll.image);
+      if (fs.existsSync(imgPath)) fs.unlinkSync(imgPath);
+    }
+
+    // Remove poll reference from user's createdPolls
+    await User.findByIdAndUpdate(userId, {
+      $pull: { createdPolls: pollId }
+    });
+
+    await poll.deleteOne();
+
+    res.json({ success: true, message: "Poll deleted successfully" });
+  } catch (err) {
+    console.log("Delete Poll Error:", err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+
 module.exports = {
   createPoll,
   getAllPolls,
@@ -189,5 +224,6 @@ module.exports = {
   shipPoll,
   voteOption,
   likePoll,
+  deletePoll,
   upload,
 };

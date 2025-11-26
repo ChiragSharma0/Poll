@@ -13,7 +13,7 @@ export const AuthProvider = ({ children }) => {
   // Profile now includes stats
   const [profileData, setProfileData] = useState(null);
 
-  const API = "http://localhost:5000/api";
+  const API = import.meta.env.VITE_API_URL;
 
   // ------------------------------------
   // REGISTER
