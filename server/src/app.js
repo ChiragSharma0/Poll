@@ -1,6 +1,7 @@
 const express = require("express");
 const app = express();
 const cors = require("cors");
+require("dotenv").config();
 
 // Routes
 const authRoutes = require("./routes/authRoutes");
@@ -8,7 +9,15 @@ const profileRoutes = require("./routes/profileRoutes");
 const pollRoutes = require("./routes/pollRoutes");
 const AdminRoutes = require("./routes/DashRoutes")
 // Middleware
-app.use(cors());
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL,
+    methods: "GET,POST,PUT,DELETE,PATCH",
+    credentials: true,
+  })
+);
+
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
