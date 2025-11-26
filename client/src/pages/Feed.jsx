@@ -9,7 +9,7 @@ export default function FeedPage() {
 
   const fetchPolls = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/polls/all");
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/polls/all`);
       setPolls(res.data.polls || []);
     } catch (err) {
       console.log("Fetch Polls Error:", err);
